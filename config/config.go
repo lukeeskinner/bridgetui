@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ type Config struct {
 	Name string `json:"name"`
 }
 
-func configPath() (string, error) {
+func path() (string, error) {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
@@ -19,12 +19,14 @@ func configPath() (string, error) {
 	return filepath.Join(dir, "bridge-tui", "config.json"), nil
 }
 
-func loadConfig() (Config, bool, error) {
-	path, err := configPath()
+// Load reads the config file. Returns (config, firstBoot, error).
+// firstBoot is true when the file doesn't exist yet.
+func Load() (Config, bool, error) {
+	p, err := path()
 	if err != nil {
 		return Config{}, false, err
 	}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(p)
 	if errors.Is(err, os.ErrNotExist) {
 		return Config{}, true, nil
 	}
@@ -38,17 +40,17 @@ func loadConfig() (Config, bool, error) {
 	return cfg, false, nil
 }
 
-func saveConfig(cfg Config) error {
-	path, err := configPath()
+func Save(cfg Config) error {
+	p, err := path()
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0644)
+	return os.WriteFile(p, data, 0644)
 }
